@@ -16,6 +16,8 @@ import TransactionsPage from "./pages/TransactionsPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import SettingsPage from "./pages/SettingsPage";
+import SupportMessagesPage from "./pages/SupportMessagesPage";
+import SystemAlertsPage from "./pages/SystemAlertsPage";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +39,8 @@ const App = () => (
           <Route path="/transactions" element={<TransactionsPage />} />
           <Route path="/reviews" element={<ReviewsPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/support" element={<SupportMessagesPage />} />
+          <Route path="/alerts" element={<SystemAlertsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

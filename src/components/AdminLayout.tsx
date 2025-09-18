@@ -30,6 +30,8 @@ const navigation = [
   { name: 'Transactions', href: '/transactions', icon: ShoppingCart },
   { name: 'Reviews', href: '/reviews', icon: Star },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { name: 'Support Messages', href: '/support', icon: Bell },
+  { name: 'System Alerts', href: '/alerts', icon: Bell },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
