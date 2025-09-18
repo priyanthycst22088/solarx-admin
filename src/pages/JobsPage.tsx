@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { Briefcase, Search, Filter, MoreHorizontal, Eye, EyeOff, MapPin, Clock } from 'lucide-react';
+import { Briefcase, Search, Filter, Plus, Eye, EyeOff, MapPin, Clock, CheckCircle, XCircle, Users, MoreHorizontal } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 
 interface Job {
@@ -14,10 +14,11 @@ interface Job {
   location: string;
   type: 'full-time' | 'part-time' | 'contract' | 'internship';
   salary: string;
-  status: 'open' | 'closed' | 'draft';
+  status: 'pending' | 'approved' | 'rejected' | 'open' | 'closed' | 'draft';
   visible: boolean;
   datePosted: string;
   applications: number;
+  submittedBy: string;
 }
 
 const mockJobs: Job[] = [
@@ -28,10 +29,11 @@ const mockJobs: Job[] = [
     location: 'San Francisco, CA',
     type: 'full-time',
     salary: '$50,000 - $70,000',
-    status: 'open',
+    status: 'approved',
     visible: true,
     datePosted: '2024-01-15',
-    applications: 23
+    applications: 23,
+    submittedBy: 'SolarTech Solutions'
   },
   {
     id: '2',
@@ -40,22 +42,37 @@ const mockJobs: Job[] = [
     location: 'Austin, TX',
     type: 'full-time',
     salary: '$80,000 - $120,000',
-    status: 'open',
-    visible: true,
+    status: 'pending',
+    visible: false,
     datePosted: '2024-01-14',
-    applications: 45
+    applications: 0,
+    submittedBy: 'Green Energy Co'
   },
   {
     id: '3',
-    title: 'Sales Representative',
+    title: 'Solar Sales Manager',
     company: 'EcoSolar Systems',
     location: 'Remote',
     type: 'contract',
     salary: '$40,000 - $60,000',
-    status: 'draft',
+    status: 'pending',
     visible: false,
     datePosted: '2024-01-10',
-    applications: 0
+    applications: 0,
+    submittedBy: 'EcoSolar Systems'
+  },
+  {
+    id: '4',
+    title: 'Energy Consultant',
+    company: 'Admin Posted',
+    location: 'New York, NY',
+    type: 'full-time',
+    salary: '$65,000 - $85,000',
+    status: 'open',
+    visible: true,
+    datePosted: '2024-01-12',
+    applications: 15,
+    submittedBy: 'Admin'
   }
 ];
 
@@ -65,15 +82,37 @@ const JobsPage = () => {
 
   const getStatusBadge = (status: Job['status']) => {
     switch (status) {
+      case 'pending':
+        return <Badge variant="warning">Pending Review</Badge>;
+      case 'approved':
+        return <Badge variant="success">Approved</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive">Rejected</Badge>;
       case 'open':
-        return <Badge variant="success">Open</Badge>;
+        return <Badge variant="success">Live</Badge>;
       case 'closed':
-        return <Badge variant="destructive">Closed</Badge>;
+        return <Badge variant="secondary">Closed</Badge>;
       case 'draft':
         return <Badge variant="secondary">Draft</Badge>;
       default:
         return <Badge variant="secondary">Unknown</Badge>;
     }
+  };
+
+  const approveJob = (jobId: string) => {
+    setJobs(jobs.map(job => 
+      job.id === jobId 
+        ? { ...job, status: 'approved' as Job['status'] }
+        : job
+    ));
+  };
+
+  const rejectJob = (jobId: string) => {
+    setJobs(jobs.map(job => 
+      job.id === jobId 
+        ? { ...job, status: 'rejected' as Job['status'] }
+        : job
+    ));
   };
 
   const getTypeBadge = (type: Job['type']) => {
@@ -102,14 +141,62 @@ const JobsPage = () => {
   return (
     <AdminLayout>
       <div className="space-y-6 p-6">
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card className="glass-card">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Jobs</p>
+                  <p className="text-2xl font-bold text-foreground">{jobs.length}</p>
+                </div>
+                <Briefcase className="w-8 h-8 text-primary" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="glass-card">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Pending Review</p>
+                  <p className="text-2xl font-bold text-warning">{jobs.filter(j => j.status === 'pending').length}</p>
+                </div>
+                <Clock className="w-8 h-8 text-warning" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="glass-card">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Live Jobs</p>
+                  <p className="text-2xl font-bold text-success">{jobs.filter(j => j.status === 'approved' || j.status === 'open').length}</p>
+                </div>
+                <Eye className="w-8 h-8 text-success" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="glass-card">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Applications</p>
+                  <p className="text-2xl font-bold text-foreground">{jobs.reduce((sum, job) => sum + job.applications, 0)}</p>
+                </div>
+                <Users className="w-8 h-8 text-primary" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Job Openings</h1>
-            <p className="text-muted-foreground">Manage job postings and applications</p>
+            <h1 className="text-3xl font-bold text-foreground">Job Openings Management</h1>
+            <p className="text-muted-foreground">Review submissions and manage job postings</p>
           </div>
           <Button className="gap-2">
-            <Briefcase className="w-4 h-4" />
-            Post Job
+            <Plus className="w-4 h-4" />
+            Post New Job
           </Button>
         </div>
 
@@ -161,6 +248,10 @@ const JobsPage = () => {
                     {getStatusBadge(job.status)}
                   </div>
                   <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Submitted By</span>
+                    <span className="text-sm">{job.submittedBy}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Type</span>
                     {getTypeBadge(job.type)}
                   </div>
@@ -180,23 +271,41 @@ const JobsPage = () => {
                     <span className="text-sm text-muted-foreground">Posted</span>
                     <span className="text-sm">{new Date(job.datePosted).toLocaleDateString()}</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Visible</span>
-                    <div className="flex items-center gap-2">
-                      {job.visible ? <Eye className="w-4 h-4 text-success" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
-                      <Switch 
-                        checked={job.visible} 
-                        onCheckedChange={() => toggleVisibility(job.id)}
-                      />
+                  {job.status === 'approved' && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Visible</span>
+                      <div className="flex items-center gap-2">
+                        {job.visible ? <Eye className="w-4 h-4 text-success" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
+                        <Switch 
+                          checked={job.visible} 
+                          onCheckedChange={() => toggleVisibility(job.id)}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <div className="flex gap-2 pt-2">
-                    <Button size="sm" variant="outline" className="flex-1">
-                      Edit
-                    </Button>
-                    <Button size="sm" variant="outline">
-                      Applications
-                    </Button>
+                    {job.status === 'pending' ? (
+                      <>
+                        <Button size="sm" variant="default" className="flex-1 gap-1 bg-success hover:bg-success/90 text-success-foreground" onClick={() => approveJob(job.id)}>
+                          <CheckCircle className="w-3 h-3" />
+                          Approve
+                        </Button>
+                        <Button size="sm" variant="destructive" className="gap-1" onClick={() => rejectJob(job.id)}>
+                          <XCircle className="w-3 h-3" />
+                          Reject
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button size="sm" variant="outline" className="flex-1">
+                          Edit
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          <Users className="w-3 h-3 mr-1" />
+                          Applications
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardContent>

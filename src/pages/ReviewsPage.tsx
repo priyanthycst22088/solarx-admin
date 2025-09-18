@@ -3,50 +3,62 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Star, Search, Filter, MoreHorizontal, CheckCircle, XCircle, Eye } from 'lucide-react';
+import { Star, Search, Filter, ThumbsUp, ThumbsDown, Flag, Eye, EyeOff, MessageSquare, AlertTriangle, MoreHorizontal } from 'lucide-react';
 import AdminLayout from '@/components/AdminLayout';
 
 interface Review {
   id: string;
-  product: string;
   customer: string;
+  product: string;
   rating: number;
   comment: string;
-  status: 'approved' | 'pending' | 'rejected';
   date: string;
-  helpful: number;
+  status: 'approved' | 'pending' | 'flagged' | 'disabled';
+  reported: boolean;
+  reportReason?: string;
 }
 
 const mockReviews: Review[] = [
   {
     id: '1',
-    product: 'Solar Panel Kit Pro',
     customer: 'John Smith',
+    product: 'Solar Panel Kit Pro',
     rating: 5,
-    comment: 'Excellent product! Installation was smooth and the panels are performing great.',
-    status: 'approved',
+    comment: 'Excellent product! Very satisfied with the installation process and customer service.',
     date: '2024-01-15',
-    helpful: 12
+    status: 'approved',
+    reported: false
   },
   {
     id: '2',
-    product: 'Battery Storage System',
     customer: 'Sarah Johnson',
+    product: 'Battery Storage System',
     rating: 4,
-    comment: 'Good quality battery system. Would recommend to others.',
-    status: 'pending',
+    comment: 'Good battery system, works as expected. Installation could be better documented.',
     date: '2024-01-14',
-    helpful: 0
+    status: 'pending',
+    reported: false
   },
   {
     id: '3',
-    product: 'Inverter Plus',
     customer: 'Mike Wilson',
-    rating: 2,
-    comment: 'Product arrived damaged and customer service was unhelpful.',
-    status: 'pending',
-    date: '2024-01-14',
-    helpful: 0
+    product: 'Inverter Plus',
+    rating: 1,
+    comment: 'This product is terrible garbage and a complete waste of money. Horrible company!',
+    date: '2024-01-10',
+    status: 'flagged',
+    reported: true,
+    reportReason: 'Inappropriate language and false claims'
+  },
+  {
+    id: '4',
+    customer: 'Lisa Chen',
+    product: 'Solar Roof Tiles',
+    rating: 3,
+    comment: 'Average product. Had some issues with durability but customer support helped resolve them.',
+    date: '2024-01-08',
+    status: 'approved',
+    reported: false
   }
 ];
 
@@ -59,12 +71,30 @@ const ReviewsPage = () => {
       case 'approved':
         return <Badge variant="success">Approved</Badge>;
       case 'pending':
-        return <Badge variant="warning">Pending</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">Rejected</Badge>;
+        return <Badge variant="warning">Pending Review</Badge>;
+      case 'flagged':
+        return <Badge variant="destructive">Flagged</Badge>;
+      case 'disabled':
+        return <Badge variant="secondary">Disabled</Badge>;
       default:
         return <Badge variant="secondary">Unknown</Badge>;
     }
+  };
+
+  const approveReview = (reviewId: string) => {
+    setReviews(reviews.map(review => 
+      review.id === reviewId 
+        ? { ...review, status: 'approved' as Review['status'] }
+        : review
+    ));
+  };
+
+  const disableReview = (reviewId: string) => {
+    setReviews(reviews.map(review => 
+      review.id === reviewId 
+        ? { ...review, status: 'disabled' as Review['status'] }
+        : review
+    ));
   };
 
   const renderStars = (rating: number) => {
@@ -89,10 +119,58 @@ const ReviewsPage = () => {
   return (
     <AdminLayout>
       <div className="space-y-6 p-6">
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card className="glass-card">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Reviews</p>
+                  <p className="text-2xl font-bold text-foreground">{reviews.length}</p>
+                </div>
+                <MessageSquare className="w-8 h-8 text-primary" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="glass-card">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Pending Review</p>
+                  <p className="text-2xl font-bold text-warning">{reviews.filter(r => r.status === 'pending').length}</p>
+                </div>
+                <Eye className="w-8 h-8 text-warning" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="glass-card">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Flagged</p>
+                  <p className="text-2xl font-bold text-destructive">{reviews.filter(r => r.status === 'flagged').length}</p>
+                </div>
+                <Flag className="w-8 h-8 text-destructive" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="glass-card">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Reported</p>
+                  <p className="text-2xl font-bold text-destructive">{reviews.filter(r => r.reported).length}</p>
+                </div>
+                <AlertTriangle className="w-8 h-8 text-destructive" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Reviews Management</h1>
-            <p className="text-muted-foreground">Moderate customer reviews and ratings</p>
+            <p className="text-muted-foreground">Monitor and moderate customer reviews</p>
           </div>
         </div>
 
@@ -146,39 +224,46 @@ const ReviewsPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
+                  {review.reported && (
+                    <div className="flex items-center gap-2 p-2 bg-destructive/10 rounded-md">
+                      <AlertTriangle className="w-4 h-4 text-destructive" />
+                      <span className="text-sm text-destructive">Reported: {review.reportReason}</span>
+                    </div>
+                  )}
                   <p className="text-foreground">{review.comment}</p>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-muted-foreground">
-                        {review.helpful} people found this helpful
+                        {new Date(review.date).toLocaleDateString()}
                       </span>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="gap-1">
-                        <Eye className="w-3 h-3" />
-                        View Full
-                      </Button>
-                      {review.status === 'pending' && (
+                      {review.status === 'pending' || review.status === 'flagged' ? (
                         <>
                           <Button 
                             size="sm" 
                             variant="default" 
                             className="gap-1 bg-success hover:bg-success/90 text-success-foreground"
-                            onClick={() => updateReviewStatus(review.id, 'approved')}
+                            onClick={() => approveReview(review.id)}
                           >
-                            <CheckCircle className="w-3 h-3" />
+                            <ThumbsUp className="w-3 h-3" />
                             Approve
                           </Button>
                           <Button 
                             size="sm" 
                             variant="destructive" 
                             className="gap-1"
-                            onClick={() => updateReviewStatus(review.id, 'rejected')}
+                            onClick={() => disableReview(review.id)}
                           >
-                            <XCircle className="w-3 h-3" />
-                            Reject
+                            <EyeOff className="w-3 h-3" />
+                            Disable
                           </Button>
                         </>
+                      ) : (
+                        <Button size="sm" variant="outline" className="gap-1">
+                          <Eye className="w-3 h-3" />
+                          View Details
+                        </Button>
                       )}
                     </div>
                   </div>
